@@ -12,6 +12,10 @@ interface IndexPageProps {
 
 const IndexPage: React.FC<IndexPageProps> = ({ inputRef }) => {
   const containerRef = React.useRef(null);
+  const hasInitialized = React.useRef(false);
+  const [isClient, setIsClient] = React.useState(false);
+  const [bannerOutput, setBannerOutput] = React.useState<string>('');
+  
   const {
     history,
     command,
@@ -20,20 +24,25 @@ const IndexPage: React.FC<IndexPageProps> = ({ inputRef }) => {
     setHistory,
     clearHistory,
     setLastCommandIndex,
+    updateLastHistoryOutput,
   } = useHistory([]);
 
-  const init = React.useCallback(() => setHistory(banner()), []);
-
+  // Mark that we're on the client and show banner on page load
   React.useEffect(() => {
-    init();
-  }, [init]);
+    setIsClient(true);
+    // Always show banner on component mount (fresh page load)
+    if (!hasInitialized.current) {
+      setBannerOutput(banner());
+      hasInitialized.current = true;
+    }
+  }, []);
 
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.scrollIntoView();
       inputRef.current.focus({ preventScroll: true });
     }
-  }, [history]);
+  }, [history, inputRef]);
 
   return (
     <>
@@ -43,6 +52,11 @@ const IndexPage: React.FC<IndexPageProps> = ({ inputRef }) => {
 
       <div className="p-8 overflow-hidden h-full border-2 rounded border-light-yellow dark:border-dark-yellow">
         <div ref={containerRef} className="overflow-y-auto h-full">
+          {bannerOutput && (
+            <pre className="whitespace-pre-wrap mb-2" style={{ lineHeight: 'normal' }}>
+              {bannerOutput}
+            </pre>
+          )}
           <History history={history} />
 
           <Input
@@ -55,6 +69,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ inputRef }) => {
             setHistory={setHistory}
             setLastCommandIndex={setLastCommandIndex}
             clearHistory={clearHistory}
+            updateLastHistoryOutput={updateLastHistoryOutput}
           />
         </div>
       </div>
